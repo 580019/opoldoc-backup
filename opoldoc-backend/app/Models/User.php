@@ -4,6 +4,9 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -12,37 +15,59 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
+    protected $table = 'users';
+
+    protected $primaryKey = 'user_id';
+
     /**
-     * The attributes that are mass assignable.
-     *
      * @var list<string>
      */
     protected $fillable = [
-        'name',
+        'role_id',
         'email',
-        'password',
+        'password_hash',
+        'first_name',
+        'middle_name',
+        'last_name',
+        'phone',
+        'api_token',
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
      * @var list<string>
      */
     protected $hidden = [
-        'password',
-        'remember_token',
+        'password_hash',
+        'api_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
+    public function getAuthPassword()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->password_hash;
+    }
+
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'role_id', 'role_id');
+    }
+
+    public function patientProfile(): HasOne
+    {
+        return $this->hasOne(PatientProfile::class, 'user_id', 'user_id');
+    }
+
+    public function doctorProfile(): HasOne
+    {
+        return $this->hasOne(DoctorProfile::class, 'user_id', 'user_id');
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(AppNotification::class, 'user_id', 'user_id');
+    }
+
+    public function logs(): HasMany
+    {
+        return $this->hasMany(AuditLog::class, 'user_id', 'user_id');
     }
 }
